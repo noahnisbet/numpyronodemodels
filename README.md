@@ -32,7 +32,11 @@ To be implemented ...
 
 <br>
 
-# **Pyro Forum Post**
+# **Related Links**
 ---
 
+Pyro forum post:
 https://forum.pyro.ai/t/show-numpyro-class-structure-for-generating-large-models/4485
+
+Numpyro github:
+https://github.com/pyro-ppl/numpyro
