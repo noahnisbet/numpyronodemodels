@@ -70,7 +70,7 @@ rng_key = random.PRNGKey(0)
 mcmc.run(rng_key, J, sigma, y=y, extra_fields=('potential_energy',))
 ```
 
-#Output:
+# Output:
 ```
 sample: 100%|██████████| 1500/1500 [00:06<00:00, 231.37it/s, 31 steps of size 4.85e-02. acc. prob=0.99]
 
@@ -162,6 +162,10 @@ One thing I would like to note is the render_model function does not work with n
 ```
 numpyro.render_model(numpyro_traditional_model)
 ```
+<br>
+
+### **Running MCMC**
+
 Now we can run MCMC below and we will get the same output as a numpyro model defined normally.
 ```
 from jax import random
