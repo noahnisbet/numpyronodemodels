@@ -213,4 +213,4 @@ https://github.com/pyro-ppl/numpyro
 
 # **Feedback**
 ---
-Please email me at noahnisbet3@gmail.com with any questions or feedback of any kind. If there is a bug or feature that you  I should implement email me! Also feel free to use GitHub's issues tab or feature requests tab. Thank you for checking out NumPyroNodeModels!
+Please email me at noahnisbet3@gmail.com with any questions or feedback of any kind. If there is a bug or feature that I should implement, please email me! Also feel free to use GitHub's issues tab or feature requests tab. Thank you for checking out NumPyroNodeModels!
