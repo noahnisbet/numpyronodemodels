@@ -130,3 +130,6 @@ dmypy.json
 
 # MAC files
 .DS_Store
+
+#Py_charm files
+.idea
