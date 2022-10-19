@@ -1,4 +1,4 @@
-# **numyronodemodels**
+# **NumPyroNodeModels**
 ---
 **This package automatically builds large numpyro models through a class structure rather than the traditional pyro/numypro model function.**
 
