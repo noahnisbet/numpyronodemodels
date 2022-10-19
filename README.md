@@ -35,7 +35,7 @@ https://github.com/pyro-ppl/numpyro
 Documentation website:
 https://num.pyro.ai/en/stable/index.html
 
-I also included the notebook with this example in the examples folder in this repository.
+**I also included the notebook with this example in the examples folder in this repository.**
 
 A Simple Example - 8 Schools
 Let us explore NumPyro using a simple example. We will use the eight schools example from Gelman et al., Bayesian Data Analysis: Sec. 5.5, 2003, which studies the effect of coaching on SAT performance in eight schools.
