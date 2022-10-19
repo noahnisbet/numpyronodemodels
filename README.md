@@ -1,4 +1,4 @@
-# **NumPyroNodeModels**
+# **NumPyroNodeModels (Work In Progress)**
 ---
 **This package automatically builds large numpyro models through a class structure rather than the traditional pyro/numypro model function.**
 
@@ -38,6 +38,7 @@ https://num.pyro.ai/en/stable/index.html
 **I also included the notebook with this example in the examples folder in this repository.**
 
 A Simple Example - 8 Schools
+<br>
 Let us explore NumPyro using a simple example. We will use the eight schools example from Gelman et al., Bayesian Data Analysis: Sec. 5.5, 2003, which studies the effect of coaching on SAT performance in eight schools.
 
 The data is:
@@ -98,7 +99,7 @@ Number of divergences: 1
 
 First import NodeModel from numpyronodemodels after installation.
 
-After, create a NodeModels object and in the constructor pass in any constants as a dictionary where the key will a parameter be used in node_functions.
+After, create a NodeModel object and in the constructor pass in any constants as a key value pair in a dictionary where the key will be a parameter in any node_function you wish.
 
 ```
 from numpyronodemodels import NodeModel
@@ -145,7 +146,7 @@ eight_schools.add_node(name = 'theta',
                        plate = (J_plate,))
 ```
 
-Now we repeat a similar process for obs, however I will not observe this node with using y here. Instead, I will use the numpyro handler "condition" later on.
+Now we repeat a similar process for "obs", however I will not observe this node yet. Instead, I will use the numpyro handler "condition" after the model is created.
 ```
 def eight_school_obs_node_function(theta, sigma):
     return dist.Normal(theta, sigma)
@@ -209,3 +210,7 @@ https://forum.pyro.ai/t/show-numpyro-class-structure-for-generating-large-models
 
 Numpyro github:
 https://github.com/pyro-ppl/numpyro
+
+# **Feedback**
+---
+Please email me at noahnisbet3@gmail.com with any questions or feedback of any kind. If there is a bug or feature that you  I should implement email me! Also feel free to use GitHub's issues tab or feature requests tab. Thank you for checking out NumPyroNodeModels!
