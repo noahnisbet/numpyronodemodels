@@ -4,7 +4,7 @@
 
 <br>
 
-#**Installation**
+# **Installation**
 ---
 1. Make sure you have the following packages installed: 
 jax, numpyro, funsor, numpy, sklearn, pandas and arviz. 
@@ -25,14 +25,14 @@ After that simply import numpyronodemodels in your project.
 
 <br>
 
-#**Usage**
+# **Usage**
 ---
 
 To be implemented ... 
 
 <br>
 
-#**Pyro Forum Post**
+# **Pyro Forum Post**
 ---
 
 https://forum.pyro.ai/t/show-numpyro-class-structure-for-generating-large-models/4485
