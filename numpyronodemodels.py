@@ -13,6 +13,7 @@ import inspect
 from contextlib import ExitStack
 import arviz as az
 from arviz.utils import Numba
+from typing import Callable
 Numba.disable_numba()
 Numba.numba_flag
 
@@ -23,34 +24,56 @@ Still lacking:
 testing
 compile speed up strategies
 documentation in code
-
 """
 
 class NodeModel():
-
-    def __init__(self, model_args={}):
+    
+    # init, model args is used to supply constant parameters to all node functions.
+    def __init__(self, model_args: dict={}):
         self.model_args = model_args
         self.nodes = {}
 
-    def __getitem__(self,name):
+    # get node information using [<name>] on the NodeModel object
+    def __getitem__(self, name: str):
         return self.nodes[name]
 
-    def add_node(self,name,prior_distribution=None,node_function=None,arg_priors={},plate=None):
+    """
+    add_node function, adds a node to the directed acyclic graph. No need to pass in connections between nodes because NodeModel will infer 
+    connections using the node functions.
+    
+    create delete_node?
+    """
+    def add_node(self, name: str, 
+                 prior_distribution: type(numpyro.distributions)=None, 
+                 node_function: Callable[..., type(numpyro.distributions)]=None, 
+                 arg_priors: dict={}, 
+                 plate: numpyro.plate=None):
         
+        # Each node is a dictionary with the following attributes.
         self.nodes[name] = {
             'prior_distribution':prior_distribution,
             'node_function':node_function,
             'plate':plate,
             'arg_priors':arg_priors}
         
+        """
+        If arg priors is not empty then loop through the keys in the dictionary and create new nodes with the prior distribution in the value 
+        of the key-value pair.
+        
+        The new nodes have the naming convention "<key> (name of current node)".
+        """
         if arg_priors != {}:
             for key in arg_priors:
                 self.nodes[key+" ("+name+")"] = {
                     'prior_distribution':arg_priors[key],
                     'node_function':None,
                     'arg_priors':{},
-                    'plate':None}
-        
+                    'plate':None}    
+    
+    """
+    create_model uses the nodes currently in self.node to create a normal numpyro model that can be used the same way as a numpyro model defined
+    using the original method of defining models.
+    """
     def create_model(self):
         
         distributions = {}
@@ -61,48 +84,53 @@ class NodeModel():
         """
         Filling dictionary "graph"
         Nodes are the key and if a node has a logpi function the value is a list of its "parents"
+        
+        It makes sense to first sort the order that the numpyro sample statements are defined then move on to creating the model below.
         """
         for node in self.nodes:
-            #if node does not have logpi function it has no parents
+            #if node does not have logpi function it has no "parents"
             if self.nodes[node]['node_function'] is None:
                 graph[node] = []
             else:
-                #temp list to set as value in graph dictionary
+                # list that will be set as the value in "graph" dictionary
                 cur_parents = []
                 #getting the arguements to the current logpi function
                 parents = inspect.getargspec(self.nodes[node]['node_function'])[0]
                 #looping over the parents
                 for i in range(len(parents)):
-                    #if the current parent has a node append it to the the temp list as is
+                    # if the current parent is a constant in model args (defined in constructor) do nothing.
                     if parents[i] in self.model_args:
-                        continue
+                        pass
+                    # if the current parameter is in self.nodes append the name of the node to cur_parents
                     elif parents[i] in self.nodes:
                         cur_parents.append(parents[i])
-                    #if the current parent has a node but was created through add_prior_distributions append with the naming scheme betaname_node
+                    # if the current parent has a node but was created through the arg_priors parameter in add_node append with the naming scheme <parent name> (node name)
                     elif parents[i] in self.nodes[node]['arg_priors']:
                         cur_parents.append(parents[i]+" ("+node+")")
+                    # if a parent is not defined using one of the above methods raise error.
                     else:
-                        assert parents[i]+" prior distribution is not defined for "+node
+                        raise Exception(node + "'s prior distribution is not defined for " + parents[i])
                 #setting the key value pair
                 graph[node] = cur_parents
                 
         """
         Order of creation steps:
         
-        Logpi functions that use other logpi functions in their parameters must be calculated in the correct order.
+        Node functions that use other node functions in their parameters must be calculated in the correct order.
         
-        If a logpi function for a node uses a previous logpi function that has not yet been calculated the model will 
+        If a node function uses a another node that uses a node function that has not yet been calculated, the model will 
         not know what to do.
-        
+
         Order of node creation is necessary and currently done in the following way:
         
-        1. Compute and create the nodes whose parents are calculated. 
-        - The graph dictionary has a key-value pair where the key is the node and the value is the list of parents for that node. 
-        - I also have defined a list of nodes that have been created. So I take the keys whose parents are all in the created_nodes list and create those nodes.
+        1. Compute and create the nodes whose parents are already calculated. 
+            - The dictionary "graph" has a key-value pair where the key is the node and the value is the list of parameters / parents for that node.
+            - I also have defined a list of nodes that have been created. So, I take the keys such that all the parameters / parents for that node exist in the 
+            created_nodes list and create those nodes. Then move on.
         
-        2. Once the nodes from step 1 have been created I remove those node keys from the dictionary and add the nodes to created nodes
+        2. Once the nodes from step 1 have been created, I remove those nodes from the dictionary "graph" and add the nodes to created nodes.
         
-        2. Repeat from step one until the length of the sorted list equals the number of keys in the dictionary "graph"
+        3. Repeat from step one until the length of the sorted list equals the original number of keys in the dictionary "graph".
         
         **I need some error checks here for cyclic graphs
         
@@ -133,82 +161,86 @@ class NodeModel():
         self.sorted_graph_keys=sorted_graph_keys
 
         """
-        Need VMAP, foriloop from jax to speed up compile
+        Could implement VMAP, foriloop from jax to speed up compile, however it is fast as is.
         Need error handling
         """
         def model(rng_seed=random.PRNGKey(0), model_args=self.model_args):
+            
             local_vals = {}
             iteration = 0
             with seed(rng_seed=rng_seed):
+                
+                # loop over the sorted graph that was created above and define the numpyro sample statements in order.
                 for to_create in self.sorted_graph_keys:
                     iteration += 1
-
                     #only on iteration 1 can nodes with prior distributions be calculated since they have no parents
                     #currently the creation of plates is ugly using if statements
-                    """
-                    Would like to add vmap here:
-                    """
                     if iteration == 1:
+                        # loop over the current list to_create
                         for node in to_create:
+                            # if the node exists in self.nodes and the node's prior_distribution has a value move on to create a numpyro sample statement
                             if (node in self.nodes) and (self.nodes[node]['prior_distribution'] is not None):
+                                # Define numpyro sample statement with a plate context if the current node has a plate
                                 if self.nodes[node]['plate'] is not None:
+                                    # Use ExitStack to enter the plate contexts
                                     with ExitStack() as es:
+                                        # loop over all plates in case there are nested plates
                                         for plate in self.nodes[node]['plate']:
                                             es.enter_context(plate)
+                                        # sample statement
                                         local_vals[node] = numpyro.sample(node,self.nodes[node]['prior_distribution'])
                                 else:
+                                    # sample statement
                                     local_vals[node] = numpyro.sample(node,self.nodes[node]['prior_distribution'])
-                        #continue back up to the for loop since we should be finished with this iteration
+                        #continue back up to the loop over self.sorted_graph_keys since we should be finished with this iteration
                         continue
 
-                    #loop over the cur_empty keys and create their nodes in the graph
+                    #loop over the to_create keys and create their nodes in the graph
                     for node in to_create:
-                        #Since the prior distribution nodes have all been calculated there should be no keys in to_create that do not have a logpi function
-
-                        #calculate the nodes using their functions and finding their parents throught the functions args
-                        """
-                        Also ugly way of doing plates here with if statements
-                        """
+                        
+                        #Since the prior distribution nodes have all been calculated there should be no keys in to_create that do not have a node function
+                        #calculate the nodes using their functions and finding their parents through the functions args
                         if self.nodes[node]['plate'] is not None:
+                            # Using ExitStack again to enter the plate contexts
                             with ExitStack() as es:
                                 for plate in self.nodes[node]['plate']:
                                     es.enter_context(plate)
-                                #getting arguments of the node function.
+                                #getting arguments of the node function using getargspec.
                                 parents = inspect.getargspec(self.nodes[node]['node_function'])[0]
-                                #logpi params dictionary for putting in arguments programmatically
-                                logpi_params = {}
+                                #node function params dictionary for putting arguments in corresponding node functions
+                                node_function_params = {}
                                 #looping over parents
-                                #some names aren't connect since betas/nodes not explicitly created through add_node have "_node" attached
+                                #some names of parents aren't correct since nodes not explicitly created through add_node have " (<node name>)" attached
                                 for parent in parents:
                                     if parent in model_args:
-                                        logpi_params[parent] = model_args[parent]
+                                        node_function_params[parent] = model_args[parent]
                                     elif parent in local_vals:
-                                        logpi_params[parent] = local_vals[parent]
+                                        node_function_params[parent] = local_vals[parent]
                                     elif parent+" ("+node+")" in local_vals:
-                                        logpi_params[parent] = local_vals[parent+" ("+node+")"]
-                                #compute logpi
-                                #logpi must be a distribution
-                                logpi = self.nodes[node]['node_function'](**logpi_params)
-                                local_vals[node] = numpyro.sample(node,logpi)
+                                        node_function_params[parent] = local_vals[parent+" ("+node+")"]
+                                # pi is what the node function returns, pi must be a distribution
+                                pi = self.nodes[node]['node_function'](**node_function_params)
+                                local_vals[node] = numpyro.sample(node,pi)
                         else:
-                            #same as above just no plate
+                            """same as above just no plate"""
                             parents = inspect.getargspec(self.nodes[node]['node_function'])[0]
                             #logpi params dictionary for putting in arguments programmatically
-                            logpi_params = {}
+                            node_function_params = {}
                             #looping over parents
                             #some names aren't connect since betas/nodes not explicitly created through add_node have "_node" attached
                             for parent in parents:
                                 if parent in model_args:
-                                    logpi_params[parent] = model_args[parent]
+                                    node_function_params[parent] = model_args[parent]
                                 elif parent in local_vals:
-                                    logpi_params[parent] = local_vals[parent]
+                                    node_function_params[parent] = local_vals[parent]
                                 elif parent+" ("+node+")" in local_vals:
-                                    logpi_params[parent] = local_vals[parent+" ("+node+")"]
+                                    node_function_params[parent] = local_vals[parent+" ("+node+")"]
                             #compute logpi
                             #logpi must be a distribution
-                            logpi = self.nodes[node]['node_function'](**logpi_params)
+                            logpi = self.nodes[node]['node_function'](**node_function_params)
                             local_vals[node] = numpyro.sample(node,logpi)
                         
+            # creating a return list that returns every node and model argument.
             return_list = []
             for value in local_vals.values():
                 return_list.append(value)
@@ -220,14 +252,27 @@ class NodeModel():
         return model   
 
 """
-I would like to add compatability with HMC, SVI, ...
-Error handling
+NodeToSklearn is a class that does what it seems like it would do.
+It implements .fit and .predict steps with MCMC, and it is intended to be used with causal inference.
+Very helpful for clean code and access to the Sklearn library.
 
+I would like to add compatability with HMC, SVI, and any other thing numpyro models are used with.
 """
 class NodeToSklearn(BaseEstimator, RegressorMixin):
 
-	def __init__(self, prior_model, posterior_model,  target: str, num_samples: int, num_warmup: int, num_chains: int, step_size: float = 0.01, 
-                 target_accept_prob: float = 0.85, numpyro_platform: str = 'cpu', host_device_count: int = 1, nodes_blocked_prior: list = [], nodes_blocked_posterior: list = []):
+	def __init__(self,
+                 prior_model, 
+                 posterior_model,  
+                 target: str, 
+                 num_samples: int, 
+                 num_warmup: int, 
+                 num_chains: int, 
+                 step_size: float = 0.01, 
+                 target_accept_prob: float = 0.85, 
+                 numpyro_platform: str = 'cpu', 
+                 host_device_count: int = 1, 
+                 nodes_blocked_prior: list = [], 
+                 nodes_blocked_posterior: list = []):
         
 		self.prior_model = prior_model
 		self.posterior_model = posterior_model
