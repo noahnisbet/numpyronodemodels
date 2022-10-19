@@ -98,7 +98,7 @@ Number of divergences: 1
 
 First import NodeModel from numpyronodemodels after installation.
 
-After, create a NodeModels object and in the constructor pass in any constants as a dictionary where the key will a paramter be used in node_functions.
+After, create a NodeModels object and in the constructor pass in any constants as a dictionary where the key will a parameter be used in node_functions.
 
 ```
 from numpyronodemodels import NodeModel
