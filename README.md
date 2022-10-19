@@ -27,7 +27,7 @@ After that simply import numpyronodemodels in your project.
 
 # **Usage**
 ---
-Below I will recreate the 8 schools examples used in the NumPyro documentation and Numpyro Github linked here:
+Below I will recreate the 8 schools examples used in the NumPyro documentation and NumPyro Github linked here:
 
 GitHub:
 https://github.com/pyro-ppl/numpyro
