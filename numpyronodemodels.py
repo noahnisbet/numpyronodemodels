@@ -100,7 +100,7 @@ class NodeModel():
                 for i in range(len(parents)):
                     # if the current parent is a constant in model args (defined in constructor) do nothing.
                     if parents[i] in self.model_args:
-                        pass
+                        continue
                     # if the current parameter is in self.nodes append the name of the node to cur_parents
                     elif parents[i] in self.nodes:
                         cur_parents.append(parents[i])
@@ -224,7 +224,7 @@ class NodeModel():
                         else:
                             """same as above just no plate"""
                             parents = inspect.getargspec(self.nodes[node]['node_function'])[0]
-                            #logpi params dictionary for putting in arguments programmatically
+                            #node function params dictionary for putting in arguments programmatically
                             node_function_params = {}
                             #looping over parents
                             #some names aren't connect since betas/nodes not explicitly created through add_node have "_node" attached
@@ -235,10 +235,9 @@ class NodeModel():
                                     node_function_params[parent] = local_vals[parent]
                                 elif parent+" ("+node+")" in local_vals:
                                     node_function_params[parent] = local_vals[parent+" ("+node+")"]
-                            #compute logpi
-                            #logpi must be a distribution
-                            logpi = self.nodes[node]['node_function'](**node_function_params)
-                            local_vals[node] = numpyro.sample(node,logpi)
+                            # pi is what the node function returns, pi must be a numpyro distribution
+                            pi = self.nodes[node]['node_function'](**node_function_params)
+                            local_vals[node] = numpyro.sample(node,pi)
                         
             # creating a return list that returns every node and model argument.
             return_list = []
