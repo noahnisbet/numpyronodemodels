@@ -129,7 +129,7 @@ Now we will define theta. Theta depends on the samples from mu and tau, so we wi
 
 To do this we simply create a function where the parameters of this function are the names of other nodes or constants defined in the model and you return a numpyro distribution object.
 
-At runtime the model will sample a value from the paramter's distribution and pass it as an argument to this function.
+At runtime the model will sample a value from the all of he parameter's distributions and pass them in as an arguments to this function.
 ```
 def eight_school_theta_node_function(mu, tau, sigma):
     return dist.Normal(mu, tau)
