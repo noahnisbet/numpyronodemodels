@@ -1,8 +1,26 @@
-# **NumPyroNodeModels (Work In Progress)**
+# **Node Models (Work In Progress)**
 ---
 **This package automatically builds large numpyro models through a class structure rather than the traditional pyro/numypro model function.**
 
 <br>
+# **Why does NodeModels exist?**
+
+This package is for use with the probabalistic programming language NumPyro (https://github.com/pyro-ppl/numpyro). 
+
+This package generates NumPyro models using a class object rather than a traditional model function. The goal of this class is to allow users to create large inference models in more organized way. Hopefully the class will cut down on lines of code, allow for quick changes when developing, but not remove any of the functionality of base NumPyro. 
+
+I named the package NodeModels because the class has a strong emphasis on the directed acyclic graph representation of a causal inference model and is more intuitive if viewed from that perspective. We initially wanted to use a package like NetworkX to define the graph structure and still can, however I was only using .add_node() or .add_edge() in NetworkX so creating our own class structure seemed more straightforward.
+
+For some background, the motivation for this class came from a recent project where I was using NumPyro. As we got deeper into the project, our model grew quickly. My team and I found that as these models grow they get complicated and it can become tedious in a research environment where we are constantly making small changes. So, we decided that it would be worth the time to create a class structure that could programmatically create NumPyro models in order to cut down on lines of code while also keeping better track of the small details in the model. I found this class to be very helpful in my personal project, so I decided to keep working on it and share it here.
+
+# **What does the NodeModel class do?**
+
+I will go over the basic parts of a NodeModel object below, what you can do, and briefly explain what the class is doing under the hood.
+
+TODO:
+Document each part of the class. Constructor, .add_node, node_function, and .create_model works.
+Add picture for inputs to function.
+
 
 # **Installation**
 ---
