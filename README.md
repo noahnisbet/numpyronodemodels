@@ -3,6 +3,7 @@
 **This package automatically builds large numpyro models through a class structure rather than the traditional pyro/numypro model function.**
 
 <br>
+
 # **Why does NodeModels exist?**
 
 This package is for use with the probabalistic programming language NumPyro (https://github.com/pyro-ppl/numpyro). 
